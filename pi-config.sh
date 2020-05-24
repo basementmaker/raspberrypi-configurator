@@ -23,7 +23,9 @@ function updateRaspbian {
 }
 
 # Vars
+doneMessage=""
 optionMainMenu=
+optionVideoMenu=
 optionStandardMenu=
 
 clear
@@ -31,7 +33,7 @@ clear
 echo ""
 echo "---------------------------------------------------------"
 echo "BasementMaker Raspberry Pi Configurator"
-echo "Version: 1.0.0 - BETA"
+echo "Version: 1.1.0 - BETA"
 echo ""
 echo "Warning: This file should only be ran on a Raspberry Pi"
 echo "running a recent version of Raspbian. Additionally, this"
@@ -57,14 +59,25 @@ echo ""
 
 echo ""
 echo "Menu:"
-echo "1 -> Standard Setups"
+echo "1 -> Video Projects"
+echo "2 -> Standard Setups"
 echo "x -> Exit"
 read -p "Choose One: " -n 1 optionMainMenu
 
 if [ $optionMainMenu == "1" ]; then
   echo ""
+  echo ""
+  echo "Menu:"
+  echo "1 -> Raspberry Pi - HomeKit Controlled Single Color LED Strip [May 2020]"
+  echo "2 -> Raspberry Pi - HomeKit Controlled RGB LED Strip (Updated) [May 2020]"
+  echo "x -> Exit"
+  read -p "Choose One: " -n 1 optionVideoMenu
+elif [ $optionMainMenu == "2" ]; then
+  echo ""
+  echo ""
   echo "Menu:"
   echo "1 -> PiGPIO"
+  echo "2 -> PiGPIO & Node.js v12"
   echo "x -> Exit"
   read -p "Choose One: " -n 1 optionStandardMenu
 else
@@ -73,14 +86,67 @@ else
 fi
 
 #
+# Video Setups
+#
+#
+if [ "$optionVideoMenu" == "1" ]; then
+  updateRaspbian
+  echo ""
+  echo "Installing Node.js & PiGPIO ..."
+  echo ""
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  sudo apt install -y nodejs git build-essential python-setuptools python3-setuptools
+  wget https://github.com/joan2937/pigpio/archive/master.zip && unzip master.zip && cd pigpio-master && make && sudo make install
+  cd ..
+  echo ""
+  echo "Fetching BasementMaker project code ..."
+  echo ""
+  git clone https://github.com/basementmaker/raspberrypi-homekit-led-strip.git
+  cd raspberrypi-homekit-led-strip
+  npm install
+  doneMessage="Type: cd raspberrypi-homekit-led-strip; sudo npm start"
+elif [ "$optionVideoMenu" == "2" ]; then
+  updateRaspbian
+  echo ""
+  echo "Installing Node.js & PiGPIO ..."
+  echo ""
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  sudo apt install -y nodejs git build-essential python-setuptools python3-setuptools
+  wget https://github.com/joan2937/pigpio/archive/master.zip && unzip master.zip && cd pigpio-master && make && sudo make install
+  cd ..
+  echo ""
+  echo "Fetching BasementMaker project code ..."
+  echo ""
+  git clone https://github.com/basementmaker/raspberrypi-homekit-rgb-led-strip.git
+  cd raspberrypi-homekit-rgb-led-strip
+  npm install
+  doneMessage="Type: cd raspberrypi-homekit-rgb-led-strip; sudo npm start"
+elif [ "$optionVideoMenu" == "x" ]; then
+  clear
+  exit 0
+fi
+
+#
 # Standard Setups
 #
-# libavahi-compat-libdnssd-dev is needed for mdns
+#
 if [ "$optionStandardMenu" == "1" ]; then
   updateRaspbian
+  echo ""
+  echo "Installing PiGPIO ..."
+  echo ""
   sudo apt install -y build-essential python-setuptools python3-setuptools
   wget https://github.com/joan2937/pigpio/archive/master.zip && unzip master.zip && cd pigpio-master && make && sudo make install
-elif [ "$optionVideoMenu" == "x" ]; then
+elif [ "$optionStandardMenu" == "2" ]; then
+  updateRaspbian
+  echo ""
+  echo "Installing Node.js & PiGPIO ..."
+  echo ""
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  sudo apt install -y nodejs build-essential python-setuptools python3-setuptools
+  wget https://github.com/joan2937/pigpio/archive/master.zip && unzip master.zip && cd pigpio-master && make && sudo make install
+elif [ "$optionStandardMenu" == "x" ]; then
+  clear
   exit 0
 fi
 
@@ -102,6 +168,7 @@ sshStatus=$(systemctl is-active ssh)
 if [ $sshStatus != "active" ]; then
 echo "SSH is disabled, would you like to enable it for remote connectivity?"
 read -p "Enter y or n: " -n 1 optionSSH
+echo ""
     if [ $optionSSH == "y" ]; then
         sudo systemctl enable ssh
         sudo systemctl start ssh
@@ -115,3 +182,4 @@ fi
 echo ""
 echo "Finished!"
 echo ""
+echo $doneMessage
