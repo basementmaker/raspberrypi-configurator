@@ -33,12 +33,13 @@ clear
 echo ""
 echo "---------------------------------------------------------"
 echo "BasementMaker Raspberry Pi Configurator"
-echo "Version: 1.1.0 - BETA"
+echo "Version: 1.2.0 - BETA"
 echo ""
 echo "Warning: This file should only be ran on a Raspberry Pi"
 echo "running a recent version of Raspbian. Additionally, this"
 echo "script assumes a fresh installation of Raspbian without"
-echo "other software installed."
+echo "other software installed & that you are running as the"
+echo "default pi user."
 echo ""
 echo "Note: This script has only been tested on Raspberry Pi 3s"
 echo "and not yet on Raspberry Pi 4."
@@ -78,6 +79,7 @@ elif [ $optionMainMenu == "2" ]; then
   echo "Menu:"
   echo "1 -> PiGPIO"
   echo "2 -> PiGPIO & Node.js v12"
+  echo "3 -> PM2 (Requires Node.js)"
   echo "x -> Exit"
   read -p "Choose One: " -n 1 optionStandardMenu
 else
@@ -145,6 +147,14 @@ elif [ "$optionStandardMenu" == "2" ]; then
   curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
   sudo apt install -y nodejs build-essential python-setuptools python3-setuptools
   wget https://github.com/joan2937/pigpio/archive/master.zip && unzip master.zip && cd pigpio-master && make && sudo make install
+elif [ "$optionStandardMenu" == "3" ]; then
+  updateRaspbian
+  echo ""
+  echo "Installing PM2 ..."
+  echo ""
+  sudo npm install pm2@latest -g
+  sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u pi --hp /home/pi
+  pm2 list
 elif [ "$optionStandardMenu" == "x" ]; then
   clear
   exit 0
